@@ -20,18 +20,13 @@ bindId :: (a -> Id b) -> Id a -> Id b
 bindId f (Id a) = f a
 
 instance P.Functor Id where
-  fmap =
-    M.liftM
+  fmap = M.liftM
 
 instance A.Applicative Id where
-  (<*>) =
-    M.ap
-  pure =
-    Id
+  pure = Id
+  (<*>) = M.ap
 
 instance P.Monad Id where
-  (>>=) =
-    flip bindId
-  return =
-    Id
+  return = Id
+  (>>=) = flip bindId
 

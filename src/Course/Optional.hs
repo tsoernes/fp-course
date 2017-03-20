@@ -41,17 +41,12 @@ contains _ Empty = False
 contains a (Full z) = a == z
 
 instance P.Functor Optional where
-  fmap =
-    M.liftM
+  fmap = M.liftM
 
 instance A.Applicative Optional where
-  (<*>) =
-    M.ap
-  pure =
-    Full
+  pure = Full
+  (<*>) = M.ap
 
 instance P.Monad Optional where
-  (>>=) =
-    flip bindOptional
-  return =
-    Full
+  return = Full
+  (>>=) = flip bindOptional
