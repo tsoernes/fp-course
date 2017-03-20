@@ -273,7 +273,7 @@ lengthGT4 ::
   -> Bool
 lengthGT4 = len 3
   where
-    len a Nil = False
+    len _  Nil = False
     len 0 (_ :. _) = True
     len a (_ :. xs) = len (a-1) xs
 
@@ -291,8 +291,10 @@ lengthGT4 = len 3
 reverse ::
   List a
   -> List a
-reverse =
-  error "todo: Course.List#reverse"
+reverse li = rev li Nil
+  where
+    rev Nil a = a
+    rev (x :. xs) a = rev xs (x :. a)
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -306,23 +308,11 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce =
-  error "todo: Course.List#produce"
+produce f a = a :. produce f (f a)
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
 --
--- >>> notReverse Nil
--- []
---
--- prop> let types = x :: List Int in notReverse x ++ notReverse y == notReverse (y ++ x)
---
--- prop> let types = x :: Int in notReverse (x :. Nil) == x :. Nil
-notReverse ::
-  List a
-  -> List a
-notReverse =
-  error "todo: Is it even possible?"
 
 ---- End of list exercises
 
