@@ -41,8 +41,7 @@ instance Functor Id where
     (a -> b)
     -> Id a
     -> Id b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Id"
+  (<$>) f (Id a) = Id $ f a
 
 -- | Maps a function on the List functor.
 --
@@ -52,13 +51,10 @@ instance Functor Id where
 -- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
 instance Functor List where
-  (<$>) ::
-    (a -> b)
-    -> List a
-    -> List b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance List"
+  (<$>) :: (a -> b) -> List a -> List b
 
+  (<$>) f Nil = Nil
+  (<$>) f (x :. xs) = f x :. (f <$> xs)
 -- | Maps a function on the Optional functor.
 --
 -- >>> (+1) <$> Empty
@@ -67,24 +63,17 @@ instance Functor List where
 -- >>> (+1) <$> Full 2
 -- Full 3
 instance Functor Optional where
-  (<$>) ::
-    (a -> b)
-    -> Optional a
-    -> Optional b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Optional"
+  (<$>) :: (a -> b) -> Optional a -> Optional b
+  (<$>) f Empty = Empty
+  (<$>) f (Full a) = Full $ f a
 
 -- | Maps a function on the reader ((->) t) functor.
 --
 -- >>> ((+1) <$> (*2)) 8
 -- 17
 instance Functor ((->) t) where
-  (<$>) ::
-    (a -> b)
-    -> ((->) t a)
-    -> ((->) t b)
-  (<$>) =
-    error "todo: Course.Functor (<$>)#((->) t)"
+  (<$>) :: (a -> b) -> ((->) t a) -> ((->) t b)
+  (<$>) f g = f . g
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
@@ -94,14 +83,10 @@ instance Functor ((->) t) where
 -- prop> x <$ (a :. b :. c :. Nil) == (x :. x :. x :. Nil)
 --
 -- prop> x <$ Full q == Full x
-(<$) ::
-  Functor f =>
-  a
-  -> f b
-  -> f a
-(<$) =
-  error "todo: Course.Functor#(<$)"
-
+(<$)
+  :: Functor f
+  => a -> f b -> f a
+(<$) c fctor = (\_ -> c) <$> fctor
 -- | Anonymous map producing unit value.
 --
 -- >>> void (1 :. 2 :. 3 :. Nil)
@@ -115,13 +100,10 @@ instance Functor ((->) t) where
 --
 -- >>> void (+10) 5
 -- ()
-void ::
-  Functor f =>
-  f a
-  -> f ()
-void =
-  error "todo: Course.Functor#void"
-
+void
+  :: Functor f
+  => f a -> f ()
+void = (<$) ()
 -----------------------
 -- SUPPORT LIBRARIES --
 -----------------------
