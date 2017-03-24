@@ -1,15 +1,15 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RebindableSyntax    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RebindableSyntax #-}
 
 module Course.FileIO where
 
-import Course.Core
-import Course.Applicative
-import Course.Monad
-import Course.Functor
-import Course.List
+import           Course.Applicative
+import           Course.Core
+import           Course.Functor
+import           Course.List
+import           Course.Monad
 
 {-
 
@@ -52,7 +52,7 @@ To test this module, load ghci in the root of the project directory, and do
 Example output:
 
 $ ghci
-GHCi, version ... 
+GHCi, version ...
 Loading package...
 Loading ...
 [ 1 of 28] Compiling (etc...
@@ -71,43 +71,39 @@ the contents of c
 -}
 
 -- /Tip:/ use @getArgs@ and @run@
-main ::
-  IO ()
-main =
-  error "todo: Course.FileIO#main"
+main :: IO ()
+main = (run . headOr Nil) =<< getArgs
 
-type FilePath =
-  Chars
+type FilePath = Chars
 
 -- /Tip:/ Use @getFiles@ and @printFiles@.
 run ::
   Chars
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run path = printFiles =<< getFiles . lines . snd =<< getFile path
 
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo: Course.FileIO#getFiles"
+getFiles paths = sequence $ map getFile paths
 
+-- Read a file from the given path and return a pair with the path and file contents
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+getFile path = (\c -> return (path, c)) =<< readFile path
 
+-- Call printFile for each path content pair in the list
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+printFiles li = void $ sequence $ map (uncurry printFile) li
 
+-- Print given path and contents
 printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
-
+printFile path content = do
+  putStrLn $ "========= " ++ path
+  putStrLn content
