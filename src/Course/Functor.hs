@@ -1,14 +1,14 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE InstanceSigs        #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE InstanceSigs #-}
 
 module Course.Functor where
 
-import Course.Core
-import Course.Id
-import Course.Optional
-import Course.List
-import qualified Prelude as P(fmap)
+import           Course.Core
+import           Course.Id
+import           Course.List
+import           Course.Optional
+import qualified Prelude         as P (fmap)
 
 -- | All instances of the `Functor` type-class must satisfy two laws. These laws
 -- are not checked by the compiler. These laws are given as:
@@ -53,7 +53,7 @@ instance Functor Id where
 instance Functor List where
   (<$>) :: (a -> b) -> List a -> List b
 
-  (<$>) f Nil = Nil
+  (<$>) _ Nil       = Nil
   (<$>) f (x :. xs) = f x :. (f <$> xs)
 -- | Maps a function on the Optional functor.
 --
@@ -64,7 +64,7 @@ instance Functor List where
 -- Full 3
 instance Functor Optional where
   (<$>) :: (a -> b) -> Optional a -> Optional b
-  (<$>) f Empty = Empty
+  (<$>) _ Empty    = Empty
   (<$>) f (Full a) = Full $ f a
 
 -- | Maps a function on the reader ((->) t) functor.
@@ -72,7 +72,7 @@ instance Functor Optional where
 -- >>> ((+1) <$> (*2)) 8
 -- 17
 instance Functor ((->) t) where
-  (<$>) :: (a -> b) -> ((->) t a) -> ((->) t b)
+  (<$>) :: (a -> b) -> (->) t a -> (->) t b
   (<$>) f g = f . g
 
 -- | Anonymous map. Maps a constant value on a functor.
@@ -86,7 +86,7 @@ instance Functor ((->) t) where
 (<$)
   :: Functor f
   => a -> f b -> f a
-(<$) c fctor = (\_ -> c) <$> fctor
+(<$) c fctor = const c <$> fctor
 -- | Anonymous map producing unit value.
 --
 -- >>> void (1 :. 2 :. 3 :. Nil)

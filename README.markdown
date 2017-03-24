@@ -22,7 +22,7 @@ https://github.com/data61/fp-course
 #### Special note 2
 
 Since February 2017, this repository is no longer hosted at
-https://github.com/NICTA/course which is deprecated. Data61 replaces what was 
+https://github.com/NICTA/course which is deprecated. Data61 replaces what was
 NICTA since July 2016. The new repository is located at
 https://github.com/data61/fp-course
 
@@ -54,11 +54,11 @@ however, your first post might be moderated. This is simply to prevent spam.
 2. [[haskell-exercises]](https://groups.google.com/forum/#!forum/haskell-exercises)
    is a Google Group for queries related specifically to this Data61 functional
    programming course material. This mailing list is not owned by Data61, but is
-   run by others who are keen to share ideas relating to the course. 
+   run by others who are keen to share ideas relating to the course.
 
 3. \#scalaz [on Freenode](irc://irc.freenode.net/#scalaz) is an IRC channel that is operated
    by others who are keen to share ideas relating to functional programming in
-   general. Most of the participants of this channel have completed the Data61 
+   general. Most of the participants of this channel have completed the Data61
    functional programming course to some extent. They are in various timezones
    and share a passion for functional programming, so may be able to provide
    relatively quick assistance with questions.
@@ -191,13 +191,14 @@ inspect the introduction modules.
 
 They contain examples of data structures and Haskell syntax. They do not contain
 exercises and exist to provide a cursory examination of Haskell syntax. The next
-step is to complete the exercises in `Course.List`.
+step is to complete the exercises in
+* + `Course.List`.
 
 After this, the following progression of modules is recommended:
 
-* `Course.Functor`
-* `Course.Applicative`
-* `Course.Monad` (please see [this issue](https://github.com/NICTA/course/issues/118))
+* + `Course.Functor`
+* + `Course.Applicative`
+* + `Course.Monad` (please see [this issue](https://github.com/NICTA/course/issues/118))
 * `Course.FileIO`
 * `Course.State`
 * `Course.StateT`
@@ -220,7 +221,7 @@ others. For example, in the progression, `Course.Functor` to `Course.Monad`, the
 exercises repeat a similar theme. Instead, a participant may wish to do
 different exercises, such as `Course.Parser`. In this case, the remaining
 answers are filled out, so that progress on to `Course.Parser` can begin
-(which depends on correct answers up to `Course.Monad`). It is recommended to 
+(which depends on correct answers up to `Course.Monad`). It is recommended to
 take this deviation if it is felt that there is more reward in doing so.
 
 Answers for the exercises can be found here:
