@@ -174,13 +174,15 @@ this source code:
 Alternatively, you may run the tests in a single source file by using `doctest`
 explicitly. From the base directory of this source code:
 
-    > doctest -isrc -Wall -fno-warn-type-defaults <filename.hs>
+    >stack exec -- doctest -isrc -Wall -fno-warn-unused-top-binds -fno-warn-orphans -fno-warn-type-defaults src/Course/a.hs
 
 Note: There is a [bug in GHC 7.4.1](http://ghc.haskell.org/trac/ghc/ticket/5820)
 where for some configurations, running the tests will cause an unjustified
 compiler error.
 
 ### Progression
+
+* + Done
 
 It is recommended to perform some exercises before others. The first step is to
 inspect the introduction modules.
@@ -201,8 +203,8 @@ After this, the following progression of modules is recommended:
 * + `Course.Monad` (please see [this issue](https://github.com/NICTA/course/issues/118))
 * + `Course.FileIO`
 * + `Course.State`
-* `Course.StateT`
-* `Course.Extend`
+* + `Course.StateT`
+* + `Course.Extend`
 * `Course.Comonad`
 * `Course.Compose`
 * `Course.Traversable`
