@@ -205,8 +205,8 @@ After this, the following progression of modules is recommended:
 * + `Course.State`
 * + `Course.StateT`
 * + `Course.Extend`
-* `Course.Comonad`
-* `Course.Compose`
+* + `Course.Comonad`
+* + `Course.Compose`
 * `Course.Traversable`
 * `Course.ListZipper`
 * `Course.Parser` *(see also `Course.Person` for the parsing rules)*
