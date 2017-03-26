@@ -1,7 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE InstanceSigs        #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE RebindableSyntax    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE RebindableSyntax #-}
 
 module Course.Applicative(
   Applicative(..)
@@ -18,12 +18,12 @@ module Course.Applicative(
 , (>>)
 ) where
 
-import Course.Core
-import Course.Functor hiding ((<$>))
-import Course.Id
-import Course.List
-import Course.Optional
-import qualified Prelude as P(fmap, return, (>>=))
+import           Course.Core
+import           Course.Functor  hiding ((<$>))
+import           Course.Id
+import           Course.List
+import           Course.Optional
+import qualified Prelude         as P (fmap, return, (>>=))
 
 -- | All instances of the `Applicative` type-class must satisfy three laws.
 -- These laws are not checked by the compiler. These laws are given as:
@@ -267,7 +267,7 @@ lift4 f fa fb fc fd = f <$> fa <*> fb <*> fc <*> fd
 sequence
   :: Applicative f
   => List (f a) -> f (List a)
-sequence Nil = pure Nil
+sequence Nil       = pure Nil
 sequence (x :. xs) = (:.) <$> x <*> sequence xs
 
 -- | Replicate an effect a given number of times.
@@ -317,7 +317,6 @@ filtering
   => (a -> f Bool) -> List a -> f (List a)
 filtering f = foldRight step (pure Nil)
   where
-    --step x fxs = (\bool xs -> if bool then x :. xs else xs) <$> (f x) <*> fxs
     step x fxs = (\bool xs -> if bool then x :. xs else xs) <$> f x <*> fxs
 
 -----------------------
