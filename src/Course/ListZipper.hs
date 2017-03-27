@@ -396,8 +396,7 @@ dropLefts (ListZipper _ i ys) = ListZipper Nil i ys
 dropRights ::
   ListZipper a
   -> ListZipper a
-dropRights =
-  error "todo: Course.ListZipper#dropRights"
+dropRights (ListZipper xs i _) = ListZipper xs i Nil
 
 -- | Move the focus left the given number of positions. If the value is negative, move right instead.
 --
@@ -410,8 +409,9 @@ moveLeftN ::
   Int
   -> ListZipper a
   -> MaybeListZipper a
-moveLeftN =
-  error "todo: Course.ListZipper#moveLeftN"
+moveLeftN n (ListZipper xs i ys)
+  |
+
 
 -- | Move the focus right the given number of positions. If the value is negative, move left instead.
 --
