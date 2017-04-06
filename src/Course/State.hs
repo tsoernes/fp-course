@@ -164,7 +164,6 @@ firstRepeat xs = eval st S.empty
 -- prop> firstRepeat (distinct xs) == Empty
 --
 -- prop> distinct xs == distinct (flatMap (\x -> x :. x :. Nil) xs)
-data Hole = Hole
 
 distinct ::
   Ord a =>

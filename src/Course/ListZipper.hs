@@ -704,7 +704,6 @@ instance Comonad ListZipper where
 --
 -- >>> traverse id (zipper [Full 1, Full 2, Full 3] (Full 4) [Empty, Full 6, Full 7])
 -- Empty
-data Hole = Hole
 
 instance Traversable ListZipper where
   -- traverse :: Applicative f => (a -> f b) -> ListZipper a -> f (ListZipper b)

@@ -1,6 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE RebindableSyntax    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RebindableSyntax #-}
 
 module Course.Core(
   Eq(..)
@@ -45,62 +45,25 @@ module Course.Core(
 , IsString(..)
 , module Data.Char
 , ifThenElse
+, Hole
 ) where
 
 
-import Prelude(
-    Eq(..)
-  , Ord(..)
-  , Show(..)
-  , Enum(..)
-  , Integral(..)
-  , Bounded(..)
-  , RealFrac(..)
-  , Num(..)
-  , Fractional(..)
-  , Bool(..)
-  , Either(..)
-  , Char
-  , Int
-  , Integer
-  , IO
-  , Rational
-  , seq
-  , error
-  , undefined
-  , const
-  , flip
-  , curry
-  , uncurry
-  , id
-  , otherwise
-  , (.)
-  , ($)
-  , (&&)
-  , (||)
-  , not
-  , even
-  , odd
-  , fst
-  , snd
-  )
-import Data.String(
-  IsString(..)
-  )
+import           Data.String   (IsString (..))
+import           Prelude       (Bool (..), Bounded (..), Char, Either (..),
+                                Enum (..), Eq (..), Fractional (..), IO, Int,
+                                Integer, Integral (..), Num (..), Ord (..),
+                                Rational, RealFrac (..), Show (..), const,
+                                curry, error, even, flip, fst, id, not, odd,
+                                otherwise, seq, snd, uncurry, undefined, ($),
+                                (&&), (.), (||))
 
-import System.IO(
-    getChar
-  )
-import Data.Function(
-    on
-  )
-import Control.Arrow(
-    first
-  , second
-  , (&&&)
-  , (***)
-  )
-import Data.Char
+import           Control.Arrow (first, second, (&&&), (***))
+import           Data.Char
+import           Data.Function (on)
+import           System.IO     (getChar)
+
+data Hole = Hole
 
 ifThenElse ::
   Bool
