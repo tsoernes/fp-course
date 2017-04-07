@@ -54,7 +54,7 @@ spaces = list space
 tok ::
   Parser a
   -> Parser a
-tok pa = (\a -> const (valueParser a) =<< spaces) =<< pa
+tok pa = pa <* spaces
 
 -- | Write a function that parses the given char followed by 0 or more spaces.
 --
@@ -204,7 +204,7 @@ between ::
   -> Parser c
   -> Parser a
   -> Parser a
-between pl pr pm = (\_ -> (\m -> const (valueParser m) =<<pr) =<< pm) =<< pl
+between pl pr pm = pl *> pm <* pr
 
 -- | Write a function that applies the given parser in between the two given characters.
 --
@@ -226,7 +226,7 @@ betweenCharTok ::
   -> Char
   -> Parser a
   -> Parser a
-betweenCharTok l r = between (is l) (is r)
+betweenCharTok l r = between (charTok l) (charTok r)
 
 -- | Write a function that parses 4 hex digits and return the character value.
 --
@@ -291,8 +291,7 @@ sepby1 ::
   Parser a
   -> Parser s
   -> Parser (List a)
-sepby1 =
-  error "todo: Course.MoreParser#sepby1"
+sepby1 pa ps = (\a -> (\xs -> valueParser (a:.xs)) =<< list (ps >>> pa)) =<< pa
 
 -- | Write a function that produces a list of values coming off the given parser,
 -- separated by the second given parser.
@@ -314,8 +313,7 @@ sepby ::
   Parser a
   -> Parser s
   -> Parser (List a)
-sepby =
-  error "todo: Course.MoreParser#sepby"
+sepby pa ps = sepby1 pa ps ||| valueParser Nil
 
 -- | Write a parser that asserts that there is no remaining input.
 --
@@ -326,8 +324,10 @@ sepby =
 -- True
 eof ::
   Parser ()
-eof =
-  error "todo: Course.MoreParser#eof"
+eof = P f
+  where
+    f Nil = Result Nil ()
+    f xs  = ErrorResult $ ExpectedEof xs
 
 -- | Write a parser that produces a character that satisfies all of the given predicates.
 --
@@ -347,11 +347,11 @@ eof =
 --
 -- >>> isErrorResult (parse (satisfyAll (isUpper :. (/= 'X') :. Nil)) "abc")
 -- True
+
 satisfyAll ::
   List (Char -> Bool)
   -> Parser Char
-satisfyAll =
-  error "todo: Course.MoreParser#satisfyAll"
+satisfyAll ps = satisfy $ and . sequence ps
 
 -- | Write a parser that produces a character that satisfies any of the given predicates.
 --
@@ -371,8 +371,7 @@ satisfyAll =
 satisfyAny ::
   List (Char -> Bool)
   -> Parser Char
-satisfyAny =
-  error "todo: Course.MoreParser#satisfyAny"
+satisfyAny ps = satisfy $ or . sequence ps
 
 -- | Write a parser that parses between the two given characters, separated by a comma character ','.
 --
@@ -400,5 +399,4 @@ betweenSepbyComma ::
   -> Char
   -> Parser a
   -> Parser (List a)
-betweenSepbyComma =
-  error "todo: Course.MoreParser#betweenSepbyComma"
+betweenSepbyComma l r pa = betweenCharTok l r $ sepby pa commaTok

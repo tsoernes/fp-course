@@ -45,7 +45,6 @@ module Course.Core(
 , IsString(..)
 , module Data.Char
 , ifThenElse
-, Hole
 ) where
 
 
@@ -63,7 +62,6 @@ import           Data.Char
 import           Data.Function (on)
 import           System.IO     (getChar)
 
-data Hole = Hole
 
 ifThenElse ::
   Bool
