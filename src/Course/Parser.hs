@@ -70,7 +70,7 @@ unexpectedCharParser ::
 unexpectedCharParser c =
   P (\_ -> ErrorResult (UnexpectedChar c))
 
--- | Return a parser that always succeeds with the given value and consumes no input.
+-- | Return a parser that always succeeds with the given value and zeroeszeroes  consumes no input.
 --
 -- >>> parse (valueParser 3) "abc"
 -- Result >abc< 3
@@ -448,6 +448,9 @@ ageParser = natural
 -- True
 consVP :: a -> List a -> Parser (List a)
 consVP a as = valueParser $ a :. as
+
+concatVP :: List a -> List a -> Parser (List a)
+concatVP as bs = valueParser $ as ++ bs
 
 firstNameParser ::
   Parser Chars

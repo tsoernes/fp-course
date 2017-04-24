@@ -25,16 +25,15 @@ import Course.List
 import Course.Functor
 import Course.Applicative
 import Course.Monad
+import Course.Parser
 
 -- $setup
 -- >>> :set -XOverloadedStrings
 
 -- The representation of the grouping of each exponent of one thousand. ["thousand", "million", ...]
-illion ::
-  List Chars
+illion :: List Chars
 illion =
-  let preillion ::
-        List (Chars -> Chars)
+  let preillion :: List (Chars -> Chars)
       preillion =
         listh [
           const ""
@@ -48,8 +47,7 @@ illion =
         , const "octo"
         , \q -> if "n" `isPrefixOf` q then "novem" else "noven"
         ]
-      postillion ::
-        List Chars
+      postillion :: List Chars
       postillion =
         listh [
           "vigintillion"
@@ -152,7 +150,7 @@ illion =
         , "nonagintanongentillion"
         ]
   in listh [
-       ""
+       "hundred"
      , "thousand"
      , "million"
      , "billion"
@@ -175,77 +173,104 @@ illion =
      , "novemdecillion"
      ] ++ lift2 ((++) =<<) preillion postillion
 
--- A data type representing the digits zero to nine.
-data Digit =
-  Zero
-  | One
-  | Two
-  | Three
-  | Four
-  | Five
-  | Six
-  | Seven
-  | Eight
-  | Nine
-  deriving (Eq, Enum, Bounded)
+digits :: Char -> Optional Chars
+digits '0' = Full "zero"
+digits '1' = Full "one"
+digits '2' = Full "two"
+digits '3' = Full "three"
+digits '4' = Full "four"
+digits '5' = Full "five"
+digits '6' = Full "six"
+digits '7' = Full "seven"
+digits '8' = Full "eight"
+digits '9' = Full "nine"
+digits _   = Empty
 
-showDigit ::
-  Digit
-  -> Chars
-showDigit Zero =
-  "zero"
-showDigit One =
-  "one"
-showDigit Two =
-  "two"
-showDigit Three =
-  "three"
-showDigit Four =
-  "four"
-showDigit Five =
-  "five"
-showDigit Six =
-  "six"
-showDigit Seven =
-  "seven"
-showDigit Eight =
-  "eight"
-showDigit Nine =
-  "nine"
+digitsNoZ :: Char -> Optional Chars
+digitsNoZ '0' = Full ""
+digitsNoZ x   = digits x
 
--- A data type representing one, two or three digits, which may be useful for grouping.
-data Digit3 =
-  D1 Digit
-  | D2 Digit Digit
-  | D3 Digit Digit Digit
-  deriving Eq
+teens :: Char -> Optional Chars
+teens '0' = Full "ten"
+teens '1' = Full "eleven"
+teens '2' = Full "twelve"
+teens '3' = Full "thirteen"
+teens '4' = Full "fourteen"
+teens '5' = Full "fifteen"
+teens '6' = Full "sixteen"
+teens '7' = Full "seventeen"
+teens '8' = Full "eighteen"
+teens '9' = Full "nineteen"
+teens _    = Empty
 
--- Possibly convert a character to a digit.
-fromChar ::
-  Char
-  -> Optional Digit
-fromChar '0' =
-  Full Zero
-fromChar '1' =
-  Full One
-fromChar '2' =
-  Full Two
-fromChar '3' =
-  Full Three
-fromChar '4' =
-  Full Four
-fromChar '5' =
-  Full Five
-fromChar '6' =
-  Full Six
-fromChar '7' =
-  Full Seven
-fromChar '8' =
-  Full Eight
-fromChar '9' =
-  Full Nine
-fromChar _ =
-  Empty
+tys :: Char -> Optional Chars
+tys '2' = Full "twenty"
+tys '3' = Full "thirty"
+tys '4' = Full "forty"
+tys '5' = Full "fifty"
+tys '6' = Full "sixty"
+tys '7' = Full "seventy"
+tys '8' = Full "eighty"
+tys '9' = Full "ninety"
+tys _   = Empty
+
+tens :: Char -> Optional Chars
+tens '1' = Full "ten"
+tens x   = tys x
+
+oneOfChar :: (Char -> Optional Chars) -> Parser Chars
+oneOfChar p = flbindParser character
+  (\c -> case p c of
+           Empty    -> unexpectedCharParser c
+           Full str -> valueParser str)
+
+-- Consume 0 or more '0' characters
+zeroes :: Parser Chars
+zeroes = list $ is '0'
+
+-- Consume all input, if any, and succeed with given value
+valueParserC :: a -> Parser a
+valueParserC out = list (satisfy (const True)) >>> valueParser out
+
+-- Parse 0 through 9
+parseDigit' :: Parser Chars
+parseDigit' = oneOfChar digits
+
+-- Parse 10 through 19
+parseTeen :: Parser Chars
+parseTeen = is '1' >>> oneOfChar teens
+
+-- Parse 20 through 99
+parseTys :: Parser Chars
+parseTys = oneOfChar tys `flbindParser`
+  (\ty -> parseDigit' `flbindParser`
+    \d -> let ty' = if d == "zero" then ty else ty ++ '-' :. d
+          in valueParser ty')
+
+-- Parse 00 through 99
+parseTens :: Parser Chars
+parseTens = parseTeen ||| parseTys ||| (is '0' >>> parseDigit')
+
+-- Parse cents (0-99), fail with "zero"
+parseCents :: Parser Chars
+parseCents = parseTens ||| oneOfChar tens ||| valueParserC "zero"
+
+-- Parse whole dollars, fail with "zero"
+parseDollars :: Parser Chars
+parseDollars = undefined
+
+-- Remove anything other than numbers and dots
+-- Remove any dot besides the first
+-- centsStr = dropWhile (/= '.') str
+-- put "and" before amount in cents and after "hundred"
+dollars' :: Chars -> Chars
+dollars' str = dStr ++ "and " ++ cStr
+  where
+    str' = filter (\c -> isDigit c || c == '.') str
+    (ds, r) = span (/= '.') str'
+    cs = filter isDigit r
+    dStr = listh $ show $ parse parseDollars ds
+    cStr = listh $ show $ parse parseDollars cs
 
 -- | Take a numeric value and produce its English output.
 --
@@ -323,5 +348,4 @@ fromChar _ =
 dollars ::
   Chars
   -> Chars
-dollars =
-  error "todo: Course.Cheque#dollars"
+dollars = dollars'
