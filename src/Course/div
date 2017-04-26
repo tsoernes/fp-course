@@ -1,0 +1,49 @@
+456789123456789012345678901234567890123456789012345678901234567890.12
+456 789 123 456 789 012 345 678 901 234 567 890 123 456 789 012 345 678 901 234 567 890.12
+four hundred and fifty-six vigintillion 
+seven hundred and eighty-nine novemdecillion 
+one hundred and twenty-three octodecillion 
+four hundred and fifty-six septendecillion 
+seven hundred and eighty-nine sexdecillion 
+twelve quindecillion 
+three hundred and forty-five quattuordecillion 
+six hundred and seventy-eight tredecillion 
+nine hundred and one duodecillion 
+two hundred and thirty-four undecillion 
+five hundred and sixty-seven decillion 
+eight hundred and ninety nonillion 
+one hundred and twenty-three octillion 
+four hundred and fifty-six septillion 
+seven hundred and eighty-nine sextillion 
+twelve quintillion 
+three hundred and forty-five quadrillion 
+six hundred and seventy-eight trillion 
+nine hundred and one billion 
+two hundred and thirty-four million 
+five hundred and sixty-seven thousand 
+eight hundred and ninety
+dollars and 
+twelve cents
+
+CASE NOT IN ABOVE EXAMPLE:
+five hundred million (no tens)
+
+Need something more generic to handle the cases:
+002 two
+020 twenty
+022 twenty-to
+200 two hundred
+220 two hundred and twenty
+222 two hundred and twenty-two
+202 two hundred and two
+
+pHun pTen pDig
+if pHun and (pTen or pDig) then combine = " and " else ""
+if pTen and pDig then combine = "-" else ""
+
+when to output "zero"?
+when there's 0 dollars or 0 cents.
+this could be handled explicitly: parse all input (if any) and output "zero" if all inp is 0
+so should parseDigit return empty string "" or fail for 0?
+if 
+

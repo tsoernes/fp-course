@@ -50,11 +50,6 @@ instance Show a => Show (ParseResult a) where
   show (Result i a) =
     stringconcat ["Result >", hlist i, "< ", show a]
 
--- Same as Show instance, but ignore unparsed string
---showRes :: Show a => ParseResult a -> Chars
-showRes (ErrorResult e) = listh $ show e
-showRes (Result _ a) = listh $ show a
-
 -- Function to determine if a parse result is an error.
 isErrorResult ::
   ParseResult a
@@ -188,13 +183,6 @@ flbindParser =
   -> Parser b
 pa >>> pb = bindParser (const pb) pa
 
-(<<<) ::
-  Parser a
-  -> Parser b
-  -> Parser a
-pa <<< pb = pa `flbindParser`
-  (\inp -> pb `flbindParser` const (valueParser inp))
-
 -- | Return a parser that tries the first parser for a successful value.
 --
 --   * If the first parser succeeds then use this parser.
@@ -224,13 +212,13 @@ infixl 3 |||
 
 -- | Try first parser, and continue with the second parser regardless
 -- of whether the first fails or not
-(|>|) ::
+tryConcat ::
   Parser Chars
   -> Parser Chars
   -> Parser Chars
-p1 |>| p2 = bindParser (flbindParser p2 . concatVP) p1 ||| p2
-
-infixl 3 |>|
+tryConcat p1 p2 = bindParser f p1 ||| p2
+  where
+    f str1 = (flbindParser p2) . concatVP str1
 
 -- | Return a parser that continues producing a list of values from the given parser.
 --
@@ -473,18 +461,6 @@ consVP a as = valueParser $ a :. as
 
 concatVP :: List a -> List a -> Parser (List a)
 concatVP as bs = valueParser $ as ++ bs
-
--- Parse two parsers in succession and concatenate their result
-concatPs:: Parser (List a) -> Parser (List a) -> Parser (List a)
-concatPs p1 p2 = p1 `flbindParser`
-  (\r1 -> p2 `flbindParser`
-    (\r2 -> valueParser $ r1 ++ r2))
-
--- Parse two parsers in succession and concatenate their result with a List in the middle
-concatPsWith :: Parser (List a) -> Parser (List a) -> List a -> Parser (List a)
-concatPsWith p1 p2 mid = p1 `flbindParser`
-  (\r1 -> p2 `flbindParser`
-    (\r2 -> valueParser $ r1 ++ mid ++ r2))
 
 firstNameParser ::
   Parser Chars

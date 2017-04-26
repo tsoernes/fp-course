@@ -26,6 +26,7 @@ import Course.Functor
 import Course.Applicative
 import Course.Monad
 import Course.Parser
+import Course.MoreParser
 
 -- $setup
 -- >>> :set -XOverloadedStrings
@@ -150,7 +151,7 @@ illion =
         , "nonagintanongentillion"
         ]
   in listh [
-       "hundred"
+       ""
      , "thousand"
      , "million"
      , "billion"
@@ -187,8 +188,12 @@ digits '9' = Full "nine"
 digits _   = Empty
 
 digitsNoZ :: Char -> Optional Chars
-digitsNoZ '0' = Full ""
+digitsNoZ '0' = Empty
 digitsNoZ x   = digits x
+
+digitsEmZ :: Char -> Optional Chars
+digitsEmZ '0' = Full ""
+digitsEmZ x   = digits x
 
 teens :: Char -> Optional Chars
 teens '0' = Full "ten"
@@ -224,17 +229,10 @@ oneOfChar p = flbindParser character
            Empty    -> unexpectedCharParser c
            Full str -> valueParser str)
 
--- Consume 0 or more '0' characters
-zeroes :: Parser Chars
-zeroes = list $ is '0'
-
 -- Consume all input, if any, and succeed with given value
 valueParserC :: a -> Parser a
 valueParserC out = list (satisfy (const True)) >>> valueParser out
 
--- Parse 0 through 9
-parseDigit' :: Parser Chars
-parseDigit' = oneOfChar digits
 
 -- Parse 10 through 19
 parseTeen :: Parser Chars
@@ -242,35 +240,74 @@ parseTeen = is '1' >>> oneOfChar teens
 
 -- Parse 20 through 99
 parseTys :: Parser Chars
-parseTys = oneOfChar tys `flbindParser`
-  (\ty -> parseDigit' `flbindParser`
-    \d -> let ty' = if d == "zero" then ty else ty ++ '-' :. d
-          in valueParser ty')
+parseTys = concatPsWith (oneOfChar tys) (oneOfChar digitsNoZ) "-"
+       ||| concatPs (oneOfChar tys) (oneOfChar digitsEmZ)
 
--- Parse 00 through 99
+-- Parse 01 through 99
 parseTens :: Parser Chars
-parseTens = parseTeen ||| parseTys ||| (is '0' >>> parseDigit')
+parseTens = parseTeen
+        ||| parseTys
+        ||| is '0' >>> oneOfChar digitsEmZ
+
+parseHuns :: Parser Chars
+parseHuns = concatPs (oneOfChar digitsNoZ) (valueParser " hundred")
+
+-- Parse 000 through 999. 000 yields empty string.
+-- Can this be made to work so that 1 yields one and 10 yiels ten
+parseHundreds :: Parser Chars
+parseHundreds = is '0' >>> parseTens
+            ||| parseHuns <<< string "00"
+            ||| concatPsWith parseHuns parseTens " and "
+            ||| parseTens
+
 
 -- Parse cents (0-99), fail with "zero"
+-- fails for 00
 parseCents :: Parser Chars
 parseCents = parseTens ||| oneOfChar tens ||| valueParserC "zero"
 
--- Parse whole dollars, fail with "zero"
-parseDollars :: Parser Chars
-parseDollars = undefined
+-- Parse dollars, fail with "zero"
+--parseDollars :: Chars -> Chars
+--Issue: There's some funkyness when trying to 'show' the result from the parser.
+--  Leading and trailing escaped quotes \"
+--  Prolly something weird with custom list instance
+parseDollars inp = map f illgroups
+  where
+    -- pad leading 0's so that all groups are of length 3
+    mod' x y = if x == y then x else mod x y
+    pad = replicate (3 - mod' (length inp) 3) '0' ++ inp
+    -- group by 3
+    groups = reverse $ groupN pad 3
+    --- zip up with corresponding illion
+    illgroups = reverse $ zip groups illion
+    f :: (Chars, Chars) -> Chars
+    f (str, illion') = (showRes $ parse parseHundreds str) ++ ' ' :.  illion'
+
+groupN :: List a -> Int -> List (List a)
+groupN xs n = groupN' xs
+  where
+    groupN' Nil = Nil
+    groupN' xs' = (take n xs') :. (groupN' $ drop n xs')
 
 -- Remove anything other than numbers and dots
 -- Remove any dot besides the first
 -- centsStr = dropWhile (/= '.') str
 -- put "and" before amount in cents and after "hundred"
+--
+-- split into groups of three and three digits with corresponding illion
+-- 1234567890
+-- 1 204 067 890
+-- [(001, "million"), (204, "thousand") (067, "hundred"), (890, "")]
+-- map with a function that parseHundreds and concats
+--
 dollars' :: Chars -> Chars
-dollars' str = dStr ++ "and " ++ cStr
+dollars' str = cStr ++ "and " ++ cStr
   where
     str' = filter (\c -> isDigit c || c == '.') str
     (ds, r) = span (/= '.') str'
     cs = filter isDigit r
-    dStr = listh $ show $ parse parseDollars ds
-    cStr = listh $ show $ parse parseDollars cs
+    --dStr = parseDollars ds
+    cStr = listh $ show $ parse parseCents cs
 
 -- | Take a numeric value and produce its English output.
 --
