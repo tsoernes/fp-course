@@ -25,16 +25,16 @@ import Course.List
 import Course.Functor
 import Course.Applicative
 import Course.Monad
+import Course.Parser
+import Course.MoreParser
 
 -- $setup
 -- >>> :set -XOverloadedStrings
 
 -- The representation of the grouping of each exponent of one thousand. ["thousand", "million", ...]
-illion ::
-  List Chars
+illion :: List Chars
 illion =
-  let preillion ::
-        List (Chars -> Chars)
+  let preillion :: List (Chars -> Chars)
       preillion =
         listh [
           const ""
@@ -48,8 +48,7 @@ illion =
         , const "octo"
         , \q -> if "n" `isPrefixOf` q then "novem" else "noven"
         ]
-      postillion ::
-        List Chars
+      postillion :: List Chars
       postillion =
         listh [
           "vigintillion"
@@ -175,107 +174,158 @@ illion =
      , "novemdecillion"
      ] ++ lift2 ((++) =<<) preillion postillion
 
--- A data type representing the digits zero to nine.
-data Digit = Zero
-           | One
-           | Two
-           | Three
-           | Four
-           | Five
-           | Six
-           | Seven
-           | Eight
-           | Nine
-  deriving (Eq, Enum, Bounded)
+digits :: Char -> Optional Chars
+digits '0' = Full "zero"
+digits '1' = Full "one"
+digits '2' = Full "two"
+digits '3' = Full "three"
+digits '4' = Full "four"
+digits '5' = Full "five"
+digits '6' = Full "six"
+digits '7' = Full "seven"
+digits '8' = Full "eight"
+digits '9' = Full "nine"
+digits _   = Empty
 
-showDigit :: Digit -> Chars
-showDigit Zero  = "zero"
-showDigit One   = "one"
-showDigit Two   = "two"
-showDigit Three = "three"
-showDigit Four  = "four"
-showDigit Five  = "five"
-showDigit Six   = "six"
-showDigit Seven = "seven"
-showDigit Eight = "eight"
-showDigit Nine  = "nine"
+digitsNoZ :: Char -> Optional Chars
+digitsNoZ '0' = Empty
+digitsNoZ x   = digits x
 
--- A data type representing one, two or three digits, which may be useful for grouping.
-data Digit3 = D1 Digit
-            | D2 Digit Digit
-            | D3 Digit Digit Digit
-  deriving Eq
+digitsEmZ :: Char -> Optional Chars
+digitsEmZ '0' = Full ""
+digitsEmZ x   = digits x
 
--- Possibly convert a character to a digit.
-fromChar :: Char -> Optional Digit
-fromChar '0' = Full Zero
-fromChar '1' = Full One
-fromChar '2' = Full Two
-fromChar '3' = Full Three
-fromChar '4' = Full Four
-fromChar '5' = Full Five
-fromChar '6' = Full Six
-fromChar '7' = Full Seven
-fromChar '8' = Full Eight
-fromChar '9' = Full Nine
-fromChar _   = Empty
+teens :: Char -> Optional Chars
+teens '0' = Full "ten"
+teens '1' = Full "eleven"
+teens '2' = Full "twelve"
+teens '3' = Full "thirteen"
+teens '4' = Full "fourteen"
+teens '5' = Full "fifteen"
+teens '6' = Full "sixteen"
+teens '7' = Full "seventeen"
+teens '8' = Full "eighteen"
+teens '9' = Full "nineteen"
+teens _    = Empty
 
-showDigit3 :: Digit3 -> List Char
-showDigit3 d =
-    let showd x = toLower <$> showDigit x
-        x .++. y = x ++ if y == Zero then Nil else '-' :. showd y
-    in case d of
-        D1 a      -> showd a
-        D2 Zero b -> showd b
-        D2 One b  -> case b of
-                      Zero  -> "ten"
-                      One   -> "eleven"
-                      Two   -> "twelve"
-                      Three -> "thirteen"
-                      Four  -> "fourteen"
-                      Five  -> "fifteen"
-                      Six   -> "sixteen"
-                      Seven -> "seventeen"
-                      Eight -> "eighteen"
-                      Nine  -> "nineteen"
-        D2 Two b          -> "twenty" .++. b
-        D2 Three b        -> "thirty" .++. b
-        D2 Four b         -> "forty" .++. b
-        D2 Five b         -> "fifty" .++. b
-        D2 Six b          -> "sixty" .++. b
-        D2 Seven b        -> "seventy" .++. b
-        D2 Eight b        -> "eighty" .++. b
-        D2 Nine b         -> "ninety" .++. b
-        D3 Zero Zero Zero -> ""
-        D3 Zero b c       -> showDigit3 (D2 b c)
-        D3 a Zero Zero    -> showd a ++ " hundred"
-        D3 a b c          -> showd a ++ " hundred and " ++ showDigit3 (D2 b c)
+tys :: Char -> Optional Chars
+tys '2' = Full "twenty"
+tys '3' = Full "thirty"
+tys '4' = Full "forty"
+tys '5' = Full "fifty"
+tys '6' = Full "sixty"
+tys '7' = Full "seventy"
+tys '8' = Full "eighty"
+tys '9' = Full "ninety"
+tys _   = Empty
 
-toDot :: Chars -> (List Digit, Chars)
-toDot = toDot' Nil
+tens :: Char -> Optional Chars
+tens '1' = Full "ten"
+tens x   = tys x
+
+oneOfChar :: (Char -> Optional Chars) -> Parser Chars
+oneOfChar p = flbindParser character
+  (\c -> case p c of
+           Empty    -> unexpectedCharParser c
+           Full str -> valueParser str)
+
+-- Consume all input, if any, and succeed with given value
+valueParserC :: a -> Parser a
+valueParserC out = list (satisfy (const True)) >>> valueParser out
+
+-- Succeed if the input is only 0's.
+parseAllZs :: Parser Chars
+parseAllZs = P (\inp -> parse (thisMany (length inp) (is '0')) inp)
+
+-- Parse 10 through 19
+parseTeen :: Parser Chars
+parseTeen = is '1' >>> oneOfChar teens
+
+-- Parse 20 through 99
+parseTys :: Parser Chars
+parseTys = concatPsWith (oneOfChar tys) (oneOfChar digitsNoZ) "-"
+       ||| concatPs (oneOfChar tys) (oneOfChar digitsEmZ)
+
+-- Parse 01 through 99
+parseTens :: Parser Chars
+parseTens = parseTeen
+        ||| parseTys
+        ||| is '0' >>> oneOfChar digitsEmZ
+
+parseHuns :: Parser Chars
+parseHuns = concatPs (oneOfChar digitsNoZ) (valueParser " hundred")
+
+-- Parse 000 through 999. 000 yields empty string.
+-- Can this be made to work so that 1 yields one and 10 yiels ten
+parseHundreds :: Parser Chars
+parseHundreds = is '0' >>> parseTens
+            ||| parseHuns <<< string "00"
+            ||| concatPsWith parseHuns parseTens " and "
+            ||| parseTens
+
+
+-- Parse cents (0-99), fail with "zero"
+-- fails for 00
+parseCents :: Parser Chars
+parseCents = parseTens ||| oneOfChar tens ||| valueParserC "zero"
+
+-- Parse dollars, fail with "zero"
+-- If this can be converted into an actual parser,
+-- (move padding (and grouping???) to 'dollars')
+-- then the zero dollar case can be easily handled
+parseDollars' :: Chars -> Chars
+parseDollars' inp = showRes $ parse pd padded
   where
-    toDot' x Nil = (x, Nil)
-    toDot' x (h:.t) = move x t
-      where
-        move = case fromChar h of
-                Full n -> toDot' . (:.) n
-                Empty -> if h == '.'
-                          then (,)
-                          else toDot'
+    -- pad leading 0's so that all groups are of length 3
+    mod' x y = let m = mod x y in if m == 0 then x else m
+    padded = replicate (3 - mod' (length inp) 3) '0' ++ inp
+    pd :: Parser (List Chars)
+    pd = parseAllZs >>> valueParser ("zero":.Nil:.Nil)
+     ||| list parseHundreds
 
-illionate :: List Digit -> Chars
-illionate = unwords . todigits Nil illion
+parseDollars :: Chars -> Chars
+parseDollars inp = dllars
   where
-    space "" = ""
-    space x = ' ' :. x
-    todigits acc _ Nil                         = acc
-    todigits _ Nil _                           = error "unsupported illion"
-    todigits acc (_:.is) (Zero:.Zero:.Zero:.t) = todigits acc is t
-    todigits acc (i:.is) (q:.r:.s:.t)          = todigits ((showDigit3 (D3 s r q) ++ space i) :. acc) is t
-    todigits acc (_:.is) (Zero:.Zero:.t)       = todigits acc is t
-    todigits acc (i:._) (r:.s:._)              = (showDigit3 (D2 s r) ++ space i) :. acc
-    todigits acc (_:.is) (Zero:.t)             = todigits acc is t
-    todigits acc (i:._) (s:._)                 = (showDigit3 (D1 s) ++ space i) :. acc
+    -- pad leading 0's so that all groups are of length 3
+    mod' x y = let m = mod x y in if m == 0 then x else m
+    padded = replicate (3 - mod' (length inp) 3) '0' ++ inp
+    -- group by 3
+    groups = reverse $ groupN padded 3
+    --- zip up with corresponding illion
+    illgroups = reverse $ zip groups illion
+    isZero = not $ isErrorResult $ parse parseAllZs inp
+    dllars = if isZero then "zero dollars" else flatMap f illgroups
+    f :: (Chars, Chars) -> Chars
+    f (str, illion') = showRes (parse parseHundreds str) ++ ' ' :.  illion'
+
+strip :: Chars -> Chars
+strip = foldRight (\x xs -> if x == '"' then xs else x:.xs) ""
+
+groupN :: List a -> Int -> List (List a)
+groupN xs n = groupN' xs
+  where
+    groupN' Nil = Nil
+    groupN' xs' = take n xs' :. groupN' (drop n xs')
+
+-- Remove anything other than numbers and dots
+-- Remove any dot besides the first
+-- centsStr = dropWhile (/= '.') str
+-- put "and" before amount in cents and after "hundred"
+--
+-- split into groups of three and three digits with corresponding illion
+-- 1234567890
+-- 1 204 067 890
+-- [(001, "million"), (204, "thousand") (067, "hundred"), (890, "")]
+-- map with a function that parseHundreds and concats
+--
+dollars' :: Chars -> Chars
+dollars' str = strip $ dStr ++ " and " ++ cStr ++ " cents"
+  where
+    str' = filter (\c -> isDigit c || c == '.') str
+    (ds, r) = span (/= '.') str'
+    cs = filter isDigit r
+    dStr = parseDollars ds
+    cStr = showRes $ parse parseCents cs
 
 -- | Take a numeric value and produce its English output.
 --
@@ -350,16 +400,7 @@ illionate = unwords . todigits Nil illion
 --
 -- >>> dollars "456789123456789012345678901234567890123456789012345678901234567890.12"
 -- "four hundred and fifty-six vigintillion seven hundred and eighty-nine novemdecillion one hundred and twenty-three octodecillion four hundred and fifty-six septendecillion seven hundred and eighty-nine sexdecillion twelve quindecillion three hundred and forty-five quattuordecillion six hundred and seventy-eight tredecillion nine hundred and one duodecillion two hundred and thirty-four undecillion five hundred and sixty-seven decillion eight hundred and ninety nonillion one hundred and twenty-three octillion four hundred and fifty-six septillion seven hundred and eighty-nine sextillion twelve quintillion three hundred and forty-five quadrillion six hundred and seventy-eight trillion nine hundred and one billion two hundred and thirty-four million five hundred and sixty-seven thousand eight hundred and ninety dollars and twelve cents"
-dollars :: Chars -> Chars
-dollars x = d' ++ " and " ++ c'
-  where
-    (d, c) = toDot (dropWhile (`notElem` ('.':.listh ['1'..'9'])) x)
-    c' = case listOptional fromChar c of
-          Nil              -> "zero cents"
-          (Zero:.One:.Nil) -> "one cent"
-          (a:.b:._)        -> showDigit3 (D2 a b) ++ " cents"
-          (a:._)           -> showDigit3 (D2 a Zero) ++ " cents"
-    d' = case d of
-          Nil        -> "zero dollars"
-          (One:.Nil) -> "one dollar"
-          _          -> illionate d ++ " dollars"
+dollars ::
+  Chars
+  -> Chars
+dollars = dollars'

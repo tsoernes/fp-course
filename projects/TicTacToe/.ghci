@@ -1,0 +1,7 @@
+:set -isrc
+:l TicTacToe.hs
+:set prompt ">> "
+:set -Wall
+:set -XGADTs
+:set -XDataKinds
+

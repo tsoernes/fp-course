@@ -51,7 +51,7 @@ instance Show a => Show (ParseResult a) where
     stringconcat ["Result >", hlist i, "< ", show a]
 
 -- Same as Show instance, but ignore unparsed string
---showRes :: Show a => ParseResult a -> Chars
+showRes :: Show a => ParseResult a -> Chars
 showRes (ErrorResult e) = listh $ show e
 showRes (Result _ a) = listh $ show a
 
@@ -83,6 +83,10 @@ valueParser ::
   a
   -> Parser a
 valueParser out = P (`Result` out)
+
+-- | Return a parser that always succeeds and consumes all input
+consumeAll :: Parser Chars
+consumeAll = P (Result Nil)
 
 -- | Return a parser that always fails with the given error.
 --
