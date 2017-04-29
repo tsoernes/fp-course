@@ -1,4 +1,4 @@
-module TicTacToe where
+
 
 {-# OPTIONS_GHC -fno-warn-missing-methods #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -264,30 +264,48 @@ instance (Apply f x t,
   => Filter f (Cons x xs) zs
 
 -------------------------------------------------------
-data CellType = None | X | O
+data CellType = X | O
+-- Maybe use Nat instead of Int?
+data Pos = Int Int
+data Cell t p = Cell CellType Pos
+data State = Empty | InPlay | Finished
+data StateU = Started -- InPlay or Finished
+            | NotFinished -- Empty or InPlay
 
-data Cell (a :: CellType) where
-  CellOf :: a -> Cell a
+-- data Board (l :: MList (Cell CellType Pos)) (s :: StateU) where
+--   EmptyBoard :: Board 'MNil 'NotFinished
+--   DoMove :: Board l s -> Cell t p -> Board ('MCons (Cell t p) l) 'Started
+class StateU2 wh
 
-data Row a where
-  EmptyRow :: Row ('MCons 'None ('MCons 'None ('MCons 'None 'MNil)))
+data Board l (s :: StateU) where
+  EmptyBoard :: Board 'MNil 'NotFinished
+  DoMove :: Board l s -> Cell t p -> Board ('MCons (Cell t p) l) 'Started
 
--- data Game a where
---   EmptyGame :: Game (MCons EmptyRow (MCons EmptyRow (MCons EmptyRow MNil)))
+type family MoveB l t p where
+  MoveB l t p = 'MNil
+  -- Move ('DoMove x y) c = 'InPlay
 
-type family CellEq c1 c2 where
-  CellEq 'None 'None = True
-  CellEq 'X 'X       = True
-  CellEq 'O 'O       = True
-  CellEq _ _         = False
+type family MoveS l t p where
+  MoveS l t p = 'NotFinished
 
-type family ZWonLine line z where
-  ZWonLine 'MNil _ = True
-  ZWonLine ('MCons x xs) z = And (CellEq x z) (ZWonLine xs z)
+-- Problem:
+-- StateU isn't really a good solution, because 'move' then isn't able to change the state
+--   to Finished
+move :: Board l 'NotFinished -> Cell t p -> Board (MoveB l t p) (MoveS l t p)
+move = undefined
+-- type family CellEq c1 c2 where
+--   CellEq 'None 'None = True
+--   CellEq 'X 'X       = True
+--   CellEq 'O 'O       = True
+--   CellEq _ _         = False
 
-data Id a = Id a
-zWonRow :: Row a -> Cell -> Id (ZWonLine a b)
-zWonRow = undefined
+-- type family ZWonLine line z where
+--   ZWonLine 'MNil _ = True
+--   ZWonLine ('MCons x xs) z = And (CellEq x z) (ZWonLine xs z)
+
+-- data Id a = Id a
+-- zWonRow :: Row a -> Cell -> Id (ZWonLine a b)
+-- zWonRow = undefined
 
 -- type family ZWon board z where
 --   ZWon board z = MOr (ZWonLine (MMapCat MFirst board) z) (ZWon (MMap MRest board) z)
